@@ -1,0 +1,13 @@
+1) create your virtual environment and install your dependencies
+2) create your requirements.txt file
+3) create your git ignore file and add your virtual environment file
+
+
+/////////////////////
+CHECKPOINTS
+////////////////////
+April 2, 2026 - Project Created and Idea Approved
+April 9, 2026 - Test level with collisions and player movement implemented
+April 16, 2026 - Sprite map for level with collisions implemented
+April 30, 2026 - Win condition, scoring, and game over implemented
+May 7, 2026 - Presentation of completed game
