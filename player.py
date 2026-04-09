@@ -30,25 +30,68 @@ def update_player(dt):
     #check for on ground
     ghost_rect = player['rect'].move(0,1) #1 pixel below player
     on_ground = len(get_collisions(ghost_rect)) > 0
+
+   #print("Player pos:", player['rect'].topleft, "On ground:", on_ground) *used to find level
+
+    #movement adjustment
+    friction = 0.03
+    max_speed = 4.5
+    air_control = 0.08
+    jump_strength = -50 #adjust to fix jump height
+
+    #gravity section
     if on_ground:
-        player['force'][1] = 0
+       if player['force'][1] > 0:
+            player['force'][1] =0
     else:
         player['force'][1] += GRAVITY * dt
            
     #get inputs
     if input.get('LEFT'):
-        player['force'][0] -= player['speed'] * dt
+        if on_ground:
+            player['force'][0] -= player['speed'] * dt
+        else:
+            player['force'][0] -= player['speed'] * air_control * dt
     if input.get('RIGHT'):
-        player['force'][0] += player['speed'] * dt
+        if on_ground:
+            player['force'][0] += player['speed'] * dt
+        else:
+            player['force'][0] += player['speed'] * air_control * dt
     if input.get('JUMP') and on_ground:
-        player['force'][1] -= player['speed'] * 5 * dt
+        player['force'][1] = jump_strength
+        player['force'][0] *= 0.9
     
-   
-    player['force'][1] = min(player['force'][1], GRAVITY*5)
+    #friction
+    if not input.get('LEFT') and not input.get('RIGHT'):
+        if player['force'][0] > 0:
+            player['force'][0] -= friction * dt
+            if player['force'][0] < 0:
+                player['force'][0] = 0
+        elif player['force'][0] < 0:
+            player['force'][0] += friction * dt
+            if player['force'][0] > 0:
+                player['force'][0] = 0
+
+    #horizontal speed
+    if player['force'][0] > max_speed:
+        player['force'][0] = max_speed
+    if player['force'][0] < -max_speed:
+        player['force'][0] = -max_speed
+
+   #fall speed
+    player['force'][1] = min(player['force'][1], GRAVITY*8)
+
+    #keep player inbounds on screen
+    #left wall
+    if player['rect'].left <= 0 and player['force'][0] < 0:
+        player['force'][0] = 0
+    #right wall will work on this later!
+    #if player['rect'].right >= WIDTH and player['force'][0] > 0:
+        #player['force'][0] = 0
+
 
     move_player(player)
     
-    player['force'][0] = 0
 
 def move_player(player):
     test_rect = player['rect'].move(player['force'])
@@ -87,12 +130,19 @@ def move_player(player):
         player['pos'] = test_y.topleft
         player['rect'].topleft = player['pos']
 
+#player spawn
+spawn_x = 100
+spawn_y = 544
+
+
 player = {
-    'pos': [100,100],
+    'spawn_x': spawn_x,
+    'spawn_y': spawn_y,
+    'pos': [spawn_x, spawn_y],
     'size': [32,32],
-    'rect': pygame.Rect([100,100],[32,32]),
-    'speed': 1,
-    'force':  [0,0], 
+    'rect': pygame.Rect([spawn_x, spawn_y], [32,32]),
+    'speed': .4,
+    'force':  [0.0, 0.0], 
     'update': update_player,
     'draw': draw_player,
     'color': GREEN

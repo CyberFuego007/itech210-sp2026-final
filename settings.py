@@ -5,7 +5,7 @@ WIDTH = 1200
 HEIGHT = 675
 CELL_SIZE = 32
 LEVEL =(75*CELL_SIZE, 22*CELL_SIZE)
-GRAVITY = 2
+GRAVITY = 1
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
