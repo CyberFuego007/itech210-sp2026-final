@@ -37,7 +37,7 @@ def update_player(dt):
     friction = 0.03
     max_speed = 4.5
     air_control = 0.08
-    jump_strength = -50 #adjust to fix jump height
+    jump_strength = -65 #adjust to fix jump height
 
     #gravity section
     if on_ground:
@@ -92,7 +92,6 @@ def update_player(dt):
 
     move_player(player)
     
-
 def move_player(player):
     test_rect = player['rect'].move(player['force'])
     hits = get_collisions(test_rect)
@@ -138,7 +137,7 @@ spawn_y = 544
 player = {
     'spawn_x': spawn_x,
     'spawn_y': spawn_y,
-    'pos': [spawn_x, spawn_y],
+    'pos': [float(spawn_x), float(spawn_y)],
     'size': [32,32],
     'rect': pygame.Rect([spawn_x, spawn_y], [32,32]),
     'speed': .4,

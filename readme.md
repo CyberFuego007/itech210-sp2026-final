@@ -11,6 +11,10 @@
 2.2) use the command: pip install -r requirements.txt
 2.2.1) this installs all of the requirements needed from the requirements.txt file
 
+#Sites:
+https://www.spritefusion.com
+https://opengameart.org
+
 
 #Checkpoint 1-4/2/2026
 In the readme.md file I want you to write out the idea for your game level and how it is centered around Native Mythology.  I am looking for a 100 to 200 word description.
