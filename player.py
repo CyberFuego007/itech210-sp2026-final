@@ -21,6 +21,12 @@ def get_player_input():
     return player_input
  
 def draw_player(surface, camera):
+    #blinking effect
+    if player['invincible_timer'] > 0:
+        #only draw every other frame
+        if player['invincible_timer'] % 10 < 5:
+            return
+
     pos = (player['pos'][0]-camera['pos'][0], player['pos'][1]-camera['pos'][1])
     pygame.draw.rect(surface, GREEN, (pos, player['size']))
 
@@ -28,7 +34,7 @@ def update_player(dt):
     input = get_player_input()
     
     #check for on ground
-    ghost_rect = player['rect'].move(0,1) #1 pixel below player
+    ghost_rect = player['rect'].move(0,3) #1 pixel below player
     on_ground = len(get_collisions(ghost_rect)) > 0
 
    #print("Player pos:", player['rect'].topleft, "On ground:", on_ground) *used to find level
@@ -36,7 +42,7 @@ def update_player(dt):
     #movement adjustment
     friction = 0.03
     max_speed = 4.5
-    air_control = 0.08
+    air_control = 0.20
     jump_strength = -65 #adjust to fix jump height
 
     #gravity section
@@ -142,6 +148,9 @@ player = {
     'rect': pygame.Rect([spawn_x, spawn_y], [32,32]),
     'speed': .4,
     'force':  [0.0, 0.0], 
+    'is_respawning': False,
+    'respawn_timer': 0,
+    'invincible_timer': 0,
     'update': update_player,
     'draw': draw_player,
     'color': GREEN
