@@ -22,6 +22,11 @@ def init():
             collider_grid[f"{x},{y}"] = None
         config['collider_grid'] = collider_grid
 
+
+    #background
+    config['background'] = pygame.image.load("media/map.png").convert()
+
+
     #add colliders to the grid
     #ground
     add_collider_to_grid((0,18), (34,3), collider_grid) #0-33
@@ -203,6 +208,10 @@ def update(dt, objects, config):
 
 
 def draw(surface, camera, objects, config):
+    #background draw
+    bg_y = HEIGHT - config['background'].get_height() + CELL_SIZE
+    surface.blit(config['background'], (-int(camera['pos'][0]), bg_y))
+
     #all draw calls are made from here
     for obj in objects:
         obj['draw'](surface, camera)
@@ -333,13 +342,14 @@ def game_loop(screen, clock, config):
         update(dt, objects, config)
         update_camera(player)
         
-        screen.fill(BLACK)
+        #screen.fill(BLACK)
         draw(screen, camera, objects, config)
 
         #debug mode
         if debug:
-            draw_colliders(screen, camera, grid)
-            draw_grid(screen, camera, grid)
+            pass
+            #draw_colliders(screen, camera, grid)
+            #draw_grid(screen, camera, grid)
         
         pygame.display.flip()
 
