@@ -8,12 +8,43 @@ from enemies import *
 from level import *
 
 pygame.init()
+pygame.mixer.init()
 
 def init():
     #initialize all of the game here
     pygame.display.set_caption("Chase Me Outside, How bout dat")
     config = {}
     
+    #game start
+    config['game_state'] = "start"
+
+    #cutscene
+    config['start_img'] = pygame.transform.scale(
+        pygame.image.load("media/start.png").convert(),
+        (WIDTH,HEIGHT)
+    )
+    config['shore_scene_img'] = pygame.transform.scale(
+        pygame.image.load("media/shore.png").convert(),
+        (WIDTH,HEIGHT)
+    )
+    config['escape_scene_img'] = pygame.transform.scale(
+        pygame.image.load("media/escape.png").convert(),
+        (WIDTH,HEIGHT)
+    )
+    config['win_scene_img'] = pygame.transform.scale(
+        pygame.image.load("media/game_won.png").convert(),
+        (WIDTH,HEIGHT)
+    )
+    config['credits_img'] = pygame.transform.scale(
+        pygame.image.load("media/end.png").convert(),
+        (WIDTH,HEIGHT)
+    )
+
+    #music
+    config['music'] ={
+        'gameplay': "media/The power of the fluteL.wav",
+    }
+
     #collider grid
     collider_grid = grid
     collider_grid.clear()
@@ -25,6 +56,7 @@ def init():
 
     #background
     config['background'] = pygame.image.load("media/map.png").convert()
+    config['chase_background'] = pygame.image.load("media/chase_map.png").convert()
 
 
     #add colliders to the grid
@@ -103,15 +135,31 @@ def init():
     #player
     config['player'] = player
     objects.append(player)
-    
+    config['player_img'] = pygame.transform.scale(
+        pygame.image.load("media/player.png").convert_alpha(),
+        (48, 64)
+    )
     #game over
     config['game_over'] = False
 
     #game won
     config['game_won'] = False
     
+    #fish, feather, enemies overlay
+    config['feather_img'] = pygame.image.load("media/feather.png").convert_alpha()   
+    config['fish_img'] = pygame.image.load("media/fish.png").convert_alpha()  
+    config['enemy_img'] = pygame.image.load("media/goomba.png").convert_alpha()
+    config['witch_img'] = pygame.image.load("media/witch.png").convert_alpha() 
+    config['witch_img'] = pygame.transform.scale(
+        pygame.image.load("media/witch.png").convert_alpha(),
+        (80, 112)
+    )
+
+    #witch projectile
+    #config['witch_projectiles'] = []
+
     #level
-    config['current_leve'] = 'escape'
+    config['current_level'] = 'escape'
     config['message'] = ""
     config['game_won'] = False
     config['sinking_ice'] = []
@@ -126,7 +174,7 @@ def init():
     config['current_level'] = "escape"
     config['message'] = ""
     config['game_won'] = False
-    config['sinking_ice'] = []
+    #config['sinking_ice'] = []
 
     #exit zone
     config['exit_zone'] = pygame.Rect(
@@ -136,10 +184,15 @@ def init():
         3 * CELL_SIZE
     )
 
+    play_music('gameplay', config)
     #gameloop
     game_loop(screen, clock, config)
 
 def update(dt, objects, config):
+    #game over
+    if config['game_over'] or config['game_won']:
+        return
+
     #all update calls are made here
     for obj in objects:
         obj['update'](dt)
@@ -151,6 +204,14 @@ def update(dt, objects, config):
         if player['respawn_timer'] <= 0:
             finish_respawn(player)
         return
+    
+    #fall below map
+    if player['rect'].top > LEVEL[1]:
+        config['health'] = max(0,config['health'] -1)
+        
+        if config['health'] <= 0:
+            config['game_over'] = True
+            return
 
     #hazards
     hazards = config['hazards'] 
@@ -168,7 +229,7 @@ def update(dt, objects, config):
             start_respawn(player)
             return
     #update sinking ice
-    update_sinking_ice(player, config)
+    #update_sinking_ice(player, config)
 
     #enemies
     update_enemies(config['enemies'])
@@ -204,6 +265,10 @@ def update(dt, objects, config):
         elif config['current_level'] == "chase":
             config['message'] = "You reached shore!!"
             config['game_won'] = True
+            config['game_state'] = "game_won"
+
+    #witch
+    update_witch(player,config)
     
 
 
@@ -214,29 +279,28 @@ def draw(surface, camera, objects, config):
 
     #all draw calls are made from here
     for obj in objects:
-        obj['draw'](surface, camera)
-    for hazard in config['hazards']:
-        pygame.draw.rect(
-            surface,
-            RED,
-            (
-                hazard.x - camera['pos'][0],
-                hazard.y - camera['pos'][1],
-                hazard.width,
-                hazard.height
-            )
-        )
+        obj['draw'](surface, camera,config)
+    #for hazard in config['hazards']:
+        #pygame.draw.rect(
+            #surface,
+            #RED,
+            #(
+                #hazard.x - camera['pos'][0],
+                #hazard.y - camera['pos'][1],
+                #hazard.width,
+                #hazard.height
+            #)
+        #)
     #draw enemies
-    draw_enemies(surface, camera, config['enemies'])
+    draw_enemies(surface, camera, config['enemies'], config)
 
     #draw feather
     for feather in config['feathers']:
-        pygame.draw.rect(
-            surface,
-            YELLOW,
+        surface.blit(
+            config['feather_img'],
             (
-                feather.x - int(camera['pos'][0]),
-                feather.y - int(camera['pos'][1]),
+                feather.x - int(camera['pos'][0]) + ITEM_X_OFFSET,
+                feather.y - int(camera['pos'][1]) + ITEM_Y_OFFSET, 
                 feather.width,
                 feather.height
             )
@@ -244,12 +308,11 @@ def draw(surface, camera, objects, config):
     
     #draw fish
     for fish_pickup in config['fish'][:]:
-        pygame.draw.rect(
-            surface,
-            CYAN,
+        surface.blit(
+            config['fish_img'],
             (
-                fish_pickup.x - int(camera['pos'][0]),
-                fish_pickup.y - int(camera['pos'][1]),
+                fish_pickup.x - int(camera['pos'][0]) + ITEM_X_OFFSET,
+                fish_pickup.y - int(camera['pos'][1]) + ITEM_Y_OFFSET,
                 fish_pickup.width,
                 fish_pickup.height
             )
@@ -264,7 +327,7 @@ def draw(surface, camera, objects, config):
     surface.blit(health_text, (10,10))
 
     #draw sinking ice
-    draw_sinking_ice(surface, camera, config)
+    #draw_sinking_ice(surface, camera, config)
 
     #draw game over
     if config['game_over']:
@@ -273,23 +336,24 @@ def draw(surface, camera, objects, config):
     
     #draw witch
     draw_witch(surface, camera, config)
+    #draw_witch_projectiles(surface, camera, config)
 
     #draw exit zone
-    pygame.draw.rect(
-        surface,
-        GREEN,
-        (
-            config['exit_zone'].x - int(camera['pos'][0]),
-            config['exit_zone'].y - int(camera['pos'][1]),
-            config['exit_zone'].width,
-            config['exit_zone'].height
-        )
-    )
+    #pygame.draw.rect(
+        #surface,
+        #GREEN,
+       # (
+            #config['exit_zone'].x - int(camera['pos'][0]),
+            #config['exit_zone'].y - int(camera['pos'][1]),
+            #config['exit_zone'].width,
+            #config['exit_zone'].height
+        #)
+    #)
     #draw game won
     if config['game_won']:
-        win_text = large_font.render("YOU MADE IT TO SHORE!", True, WHITE)
+        win_text = large_font.render("YOU MADE IT TO YOUR FAMILY!", True, WHITE)
         surface.blit(win_text, (WIDTH // 2 - 250, HEIGHT // 2))
-
+    
 
 
 def start_respawn(player):
@@ -321,6 +385,14 @@ def check_level_transition(player,config):
         else:
             config['message'] = "Collect all feathers!"
 
+def play_music(track, config):
+    pygame.mixer.music.load(config['music'][track])
+    pygame.mixer.music.set_volume(0.7)
+    pygame.mixer.music.play(-1) 
+    #print("Music loaded and playing")
+#except Exception as e:
+    #print("Music error:", e)
+
 def game_loop(screen, clock, config):
     #where the main game loop happens
     camera = config['camera']
@@ -334,16 +406,53 @@ def game_loop(screen, clock, config):
 
     while running:
         dt = clock.tick(60)
-
+        
+        #load scene
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                if config['game_state'] == "start":
+                    config['game_state'] = "shore_scene"
 
-        update(dt, objects, config)
-        update_camera(player)
+                elif config['game_state'] == "shore_scene":
+                    config['game_state'] = "escape_scene"
+                    
+                elif config['game_state'] == "escape_scene":
+                    player['rect'].topleft = (player['spawn_x'], player['spawn_y'])
+                    player['pos'] = [player['spawn_x'], player['spawn_y']]
+                    player['force'] = [0.0, 0.0]
+                    config['game_state'] = "playing"
+
+                elif config['game_state'] == "game_won":
+                    config['game_state'] = "credits"
+
+                elif config['game_state'] == "credits":
+                    running = False
+                
+
+
+        if config['game_state'] == 'playing':      
+            update(dt, objects, config)
+            update_camera(player)
         
         #screen.fill(BLACK)
-        draw(screen, camera, objects, config)
+        #draw(screen, camera, objects, config)
+
+        screen.fill(BLACK)
+
+        if config['game_state'] == "start":
+            screen.blit(config['start_img'], (0, 0))
+        elif config['game_state'] == "shore_scene":
+            screen.blit(config['shore_scene_img'], (0, 0))
+        elif config['game_state'] == "escape_scene":
+            screen.blit(config['escape_scene_img'], (0, 0))
+        elif config['game_state'] == "playing":
+            draw(screen, camera, objects, config)
+        elif config['game_state'] == "game_won":
+            screen.blit(config['win_scene_img'], (0, 0))
+        elif config['game_state'] == "credits":
+            screen.blit(config['credits_img'], (0, 0))
 
         #debug mode
         if debug:

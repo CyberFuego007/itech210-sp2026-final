@@ -20,15 +20,28 @@ def get_player_input():
 
     return player_input
  
-def draw_player(surface, camera):
-    #blinking effect
+def draw_player(surface, camera, config):
     if player['invincible_timer'] > 0:
-        #only draw every other frame
         if player['invincible_timer'] % 10 < 5:
             return
 
-    pos = (player['pos'][0]-camera['pos'][0], player['pos'][1]-camera['pos'][1])
-    pygame.draw.rect(surface, GREEN, (pos, player['size']))
+    img = config['player_img']
+
+    #flip when moving left
+    if player['direction'] < 0:
+        img = pygame.transform.flip(img, True, False)
+
+    #center player
+    x = player['rect'].centerx - img.get_width() // 2
+    y = player['rect'].bottom - img.get_height()
+
+    surface.blit(
+        img,
+        (
+            x - int(camera['pos'][0]),
+            y - int(camera['pos'][1])
+        )
+    )
 
 def update_player(dt): 
     input = get_player_input()
@@ -54,11 +67,13 @@ def update_player(dt):
            
     #get inputs
     if input.get('LEFT'):
+        player['direction'] = -1
         if on_ground:
             player['force'][0] -= player['speed'] * dt
         else:
             player['force'][0] -= player['speed'] * air_control * dt
     if input.get('RIGHT'):
+        player['direction'] = 1
         if on_ground:
             player['force'][0] += player['speed'] * dt
         else:
@@ -153,5 +168,6 @@ player = {
     'invincible_timer': 0,
     'update': update_player,
     'draw': draw_player,
-    'color': GREEN
+    'color': GREEN,
+    'direction': 1
 }

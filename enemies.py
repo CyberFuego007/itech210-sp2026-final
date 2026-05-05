@@ -19,18 +19,25 @@ def update_enemies(enemies):
 
             if enemy['rect'].right >= enemy['right_bound']:
                 enemy['direction'] = -1
-def draw_enemies(surface,camera,enemies):
+def draw_enemies(surface, camera, enemies, config):
     for enemy in enemies:
-        pygame.draw.rect(
-            surface, 
-            DARK_RED,
-            (
-                enemy['rect'].x - int(camera['pos'][0]),
-                enemy['rect'].y - int(camera['pos'][1]),
-                enemy['rect'].width,
-                enemy['rect'].height
+        img = config['enemy_img']
+
+        #flip when moving left
+        if enemy['direction'] > 0:
+            img = pygame.transform.flip(img, True, False)
+
+        x = enemy['rect'].centerx - config['enemy_img'].get_width() // 2
+        y = enemy['rect'].bottom -config['enemy_img'].get_height()
+        
+        surface.blit(
+                img, 
+                (
+                    x - int(camera['pos'][0]),
+                    y - int(camera['pos'][1])         
+                )
             )
-        ) 
+         
 def check_enemy_damage(player, enemies, config, start_respawn):
     for enemy in enemies:
         if (

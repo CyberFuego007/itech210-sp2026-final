@@ -28,6 +28,12 @@ CYAN = (0, 180, 255)
 DARK_RED = (120, 0, 0)
 PURPLE = (150,0,200)
 
+#offset
+ITEM_Y_OFFSET = -17
+ITEM_X_OFFSET = -4
+ENEMY_Y_OFFSET = -12
+
+
 #fonts
 large_font = pygame.font.SysFont("arial", 45)
 small_font = pygame.font.SysFont("arial", 10)
